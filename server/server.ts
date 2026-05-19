@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express, { NextFunction, Request, Response } from "express";
 import cors from "cors";
+import passport from "./config/passport.js";
 import authRouter from "./routes/authRoutes.js";
 import productRouter from "./routes/productRoutes.js";
 import uploadRouter from "./routes/uploadRoutes.js";
@@ -18,10 +19,13 @@ app.post("/api/stripe", express.raw({ type: "application/json" }), stripeWebhook
 
 // Middleware
 app.use(cors({
-    origin: "https://grocery-delivery-app-v2.vercel.app",
+    origin: process.env.NODE_ENV === "production" 
+        ? "https://grocery-delivery-app-v2.vercel.app"
+        : ["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173"],
     credentials: true
 }));
 app.use(express.json());
+app.use(passport.initialize());
 
 const port = process.env.PORT || 5000;
 
