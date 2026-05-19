@@ -21,61 +21,57 @@ export const stripeWebhook = async (request: Request, response: Response) => {
 
         // Handle the event
         switch (event.type) {
-            case "payment_intent.succeeded":
-                const paymentIntent = event.data.object as Stripe.PaymentIntent;
-                const paymentIntentId = paymentIntent.id;
+    case "payment_intent.succeeded": {
+        const paymentIntent = event.data.object as Stripe.PaymentIntent;
+        const paymentIntentId = paymentIntent.id;
 
-                // Getting Session Metadata
-                const session = await stripe.checkout.sessions.list({
-                    payment_intent: paymentIntentId,
-                });
-                const { orderId } = session.data[0].metadata as any;
+        const session = await stripe.checkout.sessions.list({
+            payment_intent: paymentIntentId,
+        });
+        const { orderId } = session.data[0].metadata as any;
 
-                // Mark Payment as Paid
-                const paidOrder = await prisma.order.update({
-                    where: { id: orderId },
-                    data: { isPaid: true },
-                });
+        const paidOrder = await prisma.order.update({
+            where: { id: orderId },
+            data: { isPaid: true },
+        });
 
-                // Decrease stock
-                const orderItems = Array.isArray(paidOrder.items) ? paidOrder.items : ([] as any[]);
+        const orderItems = Array.isArray(paidOrder.items) ? paidOrder.items : ([] as any[]);
 
-                for (const item of orderItems) {
-                    await prisma.product.update({
-                        where: { id: item.product },
-                        data: { stock: { decrement: item.quantity } },
-                    });
-                }
-
-                if (paidOrder) {
-                    await inngest.send({ name: "order/placed", data: { orderId } });
-                }
-
-                // Send stock update events for each product in the order
-                for (const item of orderItems) {
-                    await inngest.send({ name: "inventory/stock.updated", data: { productId: item.product } });
-                }
-                break;
-
-            case "payment_intent.canceled":
-            case "payment_intent.payment_failed": {
-                const paymentIntentFailure = event.data.object as Stripe.PaymentIntent;
-                const paymentIntentFailureId = paymentIntentFailure.id;
-
-                // Getting Session Metadata
-                const sessionFailure = await stripe.checkout.sessions.list({
-                    payment_intent: paymentIntentFailureId,
-                });
-
-                const failureOrderId = (sessionFailure.data[0].metadata as any).orderId;
-
-                await prisma.order.delete({ where: { id: failureOrderId } });
-                break;
-            }
-
-            default:
-                console.log(`Unhandled event type ${event.type}`);
+        for (const item of orderItems) {
+            await prisma.product.update({
+                where: { id: item.product },
+                data: { stock: { decrement: item.quantity } },
+            });
         }
+
+        if (paidOrder) {
+            await inngest.send({ name: "order/placed", data: { orderId } });
+        }
+
+        for (const item of orderItems) {
+            await inngest.send({ name: "inventory/stock.updated", data: { productId: item.product } });
+        }
+        break;
+    }
+
+    case "payment_intent.canceled":
+    case "payment_intent.payment_failed": {
+        const paymentIntentFailure = event.data.object as Stripe.PaymentIntent;
+        const paymentIntentFailureId = paymentIntentFailure.id;
+
+        const sessionFailure = await stripe.checkout.sessions.list({
+            payment_intent: paymentIntentFailureId,
+        });
+
+        const failureOrderId = (sessionFailure.data[0].metadata as any).orderId;
+
+        await prisma.order.delete({ where: { id: failureOrderId } });
+        break;
+    }
+
+    default:
+        console.log(`Unhandled event type ${event.type}`);
+}
 
         // Return a response to acknowledge receipt of the event
         response.json({ received: true });
