@@ -1,4 +1,4 @@
-import { User, DeliveryPartner } from "../../generated/prisma/client.ts";
+import { DeliveryPartner } from "../../generated/prisma/index.js";
 
 declare global {
     namespace Express {
@@ -6,6 +6,9 @@ declare global {
             user?: {
                 id: string;
                 isAdmin?: boolean;
+                email?: string;
+                name?: string;
+                role?: string;
             };
             partner?: DeliveryPartner;
         }
