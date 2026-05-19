@@ -14,7 +14,7 @@ const Login = () => {
 
     const { login, register } = useAuth();
 
-    const handleSubmit = async (e: React.SubmitEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         try {
@@ -30,6 +30,10 @@ const Login = () => {
         }
     };
 
+    const handleGoogleLogin = () => {
+        window.location.href = `${import.meta.env.VITE_BASE_URL}/auth/google`;
+    };
+
     return (
         <div className="min-h-screen flex">
             {/* Left Side */}
@@ -41,7 +45,7 @@ const Login = () => {
                 </div>
             </div>
 
-            {/* LRight Side */}
+            {/* Right Side */}
             <div className="flex-1 flex-center px-4 py-12 bg-app-cream">
                 <div className="w-full max-w-md">
                     {/* form header message */}
@@ -51,7 +55,6 @@ const Login = () => {
                             <span className="text-2xl font-semibold text-app-green">Instacart</span>
                         </Link>
                         <h1 className="text-2xl font-semibold text-app-green mb-2">{isLoginState ? "Sign in to your account" : "Sign up for an account"}</h1>
-
                         <p className="text-sm text-app-text-light">
                             {isLoginState ? "Don't have an account?" : "Already have an account?"}
                             <button onClick={() => setIsLoginState(!isLoginState)} className="text-orange-500 ml-1 font-semibold hover:text-orange-600 transition-colors">
@@ -89,6 +92,19 @@ const Login = () => {
                             {loading ? <Loader2Icon className="animate-spin" /> : isLoginState ? "Sign In" : "Sign Up"}
                         </button>
                     </form>
+
+                    {/* Divider */}
+                    <div className="flex items-center gap-3 my-5">
+                        <div className="flex-1 h-px bg-gray-200" />
+                        <span className="text-sm text-gray-400">or</span>
+                        <div className="flex-1 h-px bg-gray-200" />
+                    </div>
+
+                    {/* Google Login Button */}
+                    <button onClick={handleGoogleLogin} className="flex items-center justify-center gap-3 w-full py-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors">
+                        <img src="https://www.google.com/favicon.ico" alt="Google" className="size-5" />
+                        <span className="text-sm font-semibold text-gray-700">Continue with Google</span>
+                    </button>
                 </div>
             </div>
         </div>
