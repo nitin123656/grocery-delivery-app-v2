@@ -18,6 +18,7 @@ import AdminProducts from "./pages/admin/AdminProducts";
 import AdminProductForm from "./pages/admin/AdminProductForm";
 import AdminOrders from "./pages/admin/AdminOrders";
 import AdminDeliveryPartners from "./pages/admin/AdminDeliveryPartners";
+import GoogleCallback from "./pages/GoogleCallback";
 import DeliveryLogin from "./pages/delivery/DeliveryLogin";
 import DeliveryLayout from "./pages/delivery/DeliveryLayout";
 import DeliveryDashboard from "./pages/delivery/DeliveryDashboard";
@@ -30,6 +31,7 @@ const App = () => {
             <Routes>
                 {/* Auth pages - No Navbar/Footer */}
                 <Route path="/login" element={<Login />} />
+                <Route path="/auth/google" element={<GoogleCallback />} />
                 {/* Main pages - With Navbar/Footer */}
                 <Route path="/" element={<AppLayout />}>
                     <Route index element={<Home />} />
