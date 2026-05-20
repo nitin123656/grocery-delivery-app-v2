@@ -1,15 +1,20 @@
 import { useState } from "react";
 import { heroSectionData } from "../assets/assets";
 import { Link } from "react-router-dom";
-import { BikeIcon, Loader2Icon, LockIcon, MailIcon, UserIcon } from "lucide-react";
+import { BikeIcon, Loader2Icon, LockIcon, MailIcon, PhoneIcon, UserIcon } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
+import api from "../config/api";
 
 const Login = () => {
     const [isLoginState, setIsLoginState] = useState(true);
+    const [isMobileLogin, setIsMobileLogin] = useState(false);
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [phone, setPhone] = useState("");
+    const [otp, setOtp] = useState("");
+    const [otpSent, setOtpSent] = useState(false);
     const [loading, setLoading] = useState(false);
 
     const { login, register } = useAuth();
@@ -23,6 +28,36 @@ const Login = () => {
             } else {
                 await register(name, email, password);
             }
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || error?.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSendOTP = async () => {
+        if (!phone) return toast.error("Enter phone number");
+        setLoading(true);
+        try {
+            await api.post("/auth/send-otp", { phone });
+            setOtpSent(true);
+            toast.success("OTP sent successfully!");
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || error?.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleVerifyOTP = async () => {
+        if (!otp) return toast.error("Enter OTP");
+        setLoading(true);
+        try {
+            const { data } = await api.post("/auth/verify-otp", { phone, otp });
+            localStorage.setItem("auth_token", data.token);
+            localStorage.setItem("auth_user", JSON.stringify(data.user));
+            toast.success("Login successful!");
+            window.location.href = "/";
         } catch (error: any) {
             toast.error(error.response?.data?.message || error?.message);
         } finally {
@@ -48,63 +83,110 @@ const Login = () => {
             {/* Right Side */}
             <div className="flex-1 flex-center px-4 py-12 bg-app-cream">
                 <div className="w-full max-w-md">
-                    {/* form header message */}
                     <div className="text-center mb-8">
                         <Link to="/" className="inline-flex items-center gap-2 mb-6">
                             <BikeIcon className="size-8 text-app-green" />
                             <span className="text-2xl font-semibold text-app-green">Instacart</span>
                         </Link>
-                        <h1 className="text-2xl font-semibold text-app-green mb-2">{isLoginState ? "Sign in to your account" : "Sign up for an account"}</h1>
-                        <p className="text-sm text-app-text-light">
-                            {isLoginState ? "Don't have an account?" : "Already have an account?"}
-                            <button onClick={() => setIsLoginState(!isLoginState)} className="text-orange-500 ml-1 font-semibold hover:text-orange-600 transition-colors">
-                                {isLoginState ? "Create one" : "Sign in"}
-                            </button>
-                        </p>
+                        <h1 className="text-2xl font-semibold text-app-green mb-2">
+                            {isMobileLogin ? "Sign in with Mobile" : isLoginState ? "Sign in to your account" : "Sign up for an account"}
+                        </h1>
+                        {!isMobileLogin && (
+                            <p className="text-sm text-app-text-light">
+                                {isLoginState ? "Don't have an account?" : "Already have an account?"}
+                                <button onClick={() => setIsLoginState(!isLoginState)} className="text-orange-500 ml-1 font-semibold hover:text-orange-600 transition-colors">
+                                    {isLoginState ? "Create one" : "Sign in"}
+                                </button>
+                            </p>
+                        )}
                     </div>
 
-                    {/* Login / Register Form */}
-                    <form onSubmit={handleSubmit} className="space-y-5">
-                        {!isLoginState && (
+                    {isMobileLogin ? (
+                        /* Mobile OTP Login */
+                        <div className="space-y-5">
                             <label className="text-sm flex flex-col gap-1">
-                                Name
+                                Phone Number
                                 <div className="relative">
-                                    <UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-app-text-light" />
-                                    <input type="text" value={name} onChange={(e) => setName(e.target.value)} required placeholder="Your name" className="w-full pl-11 pr-4 py-3 text-sm bg-white rounded-xl border not-focus:border-app-border transition-all" />
+                                    <PhoneIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-app-text-light" />
+                                    <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91XXXXXXXXXX" className="w-full pl-11 pr-4 py-3 text-sm bg-white rounded-xl border transition-all" />
                                 </div>
                             </label>
-                        )}
-                        <label className="text-sm flex flex-col gap-1">
-                            Email Address
-                            <div className="relative">
-                                <MailIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-app-text-light" />
-                                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="you@example.com" className="w-full pl-11 pr-4 py-3 text-sm bg-white rounded-xl border not-focus:border-app-border transition-all" />
-                            </div>
-                        </label>
-                        <label className="text-sm flex flex-col gap-1">
-                            Password
-                            <div className="relative">
-                                <LockIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-app-text-light" />
-                                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="••••••••" className="w-full pl-11 pr-4 py-3 text-sm bg-white rounded-xl border not-focus:border-app-border transition-all" />
-                            </div>
-                        </label>
-                        <button type="submit" disabled={loading} className="flex-center w-full py-3 bg-green-950 text-white font-semibold rounded-xl hover:bg-green-900 transition-colors disabled:opacity-50">
-                            {loading ? <Loader2Icon className="animate-spin" /> : isLoginState ? "Sign In" : "Sign Up"}
-                        </button>
-                    </form>
 
-                    {/* Divider */}
-                    <div className="flex items-center gap-3 my-5">
-                        <div className="flex-1 h-px bg-gray-200" />
-                        <span className="text-sm text-gray-400">or</span>
-                        <div className="flex-1 h-px bg-gray-200" />
-                    </div>
+                            {otpSent && (
+                                <label className="text-sm flex flex-col gap-1">
+                                    Enter OTP
+                                    <input type="text" value={otp} onChange={(e) => setOtp(e.target.value)} placeholder="Enter 6-digit OTP" className="w-full px-4 py-3 text-sm bg-white rounded-xl border transition-all" />
+                                </label>
+                            )}
 
-                    {/* Google Login Button */}
-                    <button onClick={handleGoogleLogin} className="flex items-center justify-center gap-3 w-full py-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors">
-                        <img src="https://www.google.com/favicon.ico" alt="Google" className="size-5" />
-                        <span className="text-sm font-semibold text-gray-700">Continue with Google</span>
-                    </button>
+                            {!otpSent ? (
+                                <button onClick={handleSendOTP} disabled={loading} className="flex-center w-full py-3 bg-green-950 text-white font-semibold rounded-xl hover:bg-green-900 transition-colors disabled:opacity-50">
+                                    {loading ? <Loader2Icon className="animate-spin" /> : "Send OTP"}
+                                </button>
+                            ) : (
+                                <button onClick={handleVerifyOTP} disabled={loading} className="flex-center w-full py-3 bg-green-950 text-white font-semibold rounded-xl hover:bg-green-900 transition-colors disabled:opacity-50">
+                                    {loading ? <Loader2Icon className="animate-spin" /> : "Verify OTP"}
+                                </button>
+                            )}
+
+                            <button onClick={() => { setIsMobileLogin(false); setOtpSent(false); }} className="w-full text-sm text-app-text-light hover:text-app-green transition-colors">
+                                Back to Email Login
+                            </button>
+                        </div>
+                    ) : (
+                        /* Email/Password Login */
+                        <form onSubmit={handleSubmit} className="space-y-5">
+                            {!isLoginState && (
+                                <label className="text-sm flex flex-col gap-1">
+                                    Name
+                                    <div className="relative">
+                                        <UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-app-text-light" />
+                                        <input type="text" value={name} onChange={(e) => setName(e.target.value)} required placeholder="Your name" className="w-full pl-11 pr-4 py-3 text-sm bg-white rounded-xl border transition-all" />
+                                    </div>
+                                </label>
+                            )}
+                            <label className="text-sm flex flex-col gap-1">
+                                Email Address
+                                <div className="relative">
+                                    <MailIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-app-text-light" />
+                                    <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="you@example.com" className="w-full pl-11 pr-4 py-3 text-sm bg-white rounded-xl border transition-all" />
+                                </div>
+                            </label>
+                            <label className="text-sm flex flex-col gap-1">
+                                Password
+                                <div className="relative">
+                                    <LockIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-app-text-light" />
+                                    <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="••••••••" className="w-full pl-11 pr-4 py-3 text-sm bg-white rounded-xl border transition-all" />
+                                </div>
+                            </label>
+                            <button type="submit" disabled={loading} className="flex-center w-full py-3 bg-green-950 text-white font-semibold rounded-xl hover:bg-green-900 transition-colors disabled:opacity-50">
+                                {loading ? <Loader2Icon className="animate-spin" /> : isLoginState ? "Sign In" : "Sign Up"}
+                            </button>
+                        </form>
+                    )}
+
+                    {!isMobileLogin && (
+                        <>
+                            {/* Divider */}
+                            <div className="flex items-center gap-3 my-5">
+                                <div className="flex-1 h-px bg-gray-200" />
+                                <span className="text-sm text-gray-400">or</span>
+                                <div className="flex-1 h-px bg-gray-200" />
+                            </div>
+
+                            {/* Mobile Login Button */}
+                            <button onClick={() => setIsMobileLogin(true)} className="flex items-center justify-center gap-3 w-full py-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors mb-3">
+                                <PhoneIcon className="size-5 text-gray-600" />
+                                <span className="text-sm font-semibold text-gray-700">Continue with Mobile</span>
+                            </button>
+
+                            {/* Google Login Button */}
+                            <button onClick={handleGoogleLogin} className="flex items-center justify-center gap-3 w-full py-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors">
+                                <img src="https://www.google.com/favicon.ico" alt="Google" className="size-5" />
+                                <span className="text-sm font-semibold text-gray-700">Continue with Google</span>
+                            </button>
+                        </>
+                    )}
                 </div>
             </div>
         </div>
