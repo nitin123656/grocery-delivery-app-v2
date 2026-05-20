@@ -1,5 +1,3 @@
-import { DeliveryPartner } from "../../generated/prisma/index.js";
-
 declare global {
     namespace Express {
         interface Request {
@@ -10,7 +8,15 @@ declare global {
                 name?: string;
                 role?: string;
             };
-            partner?: DeliveryPartner;
+            partner?: {
+                id: string;
+                name: string;
+                email: string;
+                phone: string;
+                avatar?: string | null;
+                vehicleType?: string | null;
+                isActive?: boolean | null;
+            };
         }
     }
 }
