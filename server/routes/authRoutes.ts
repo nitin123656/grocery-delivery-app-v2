@@ -2,11 +2,16 @@ import express from "express";
 import { login, register } from "../controllers/authController.js";
 import passport from "../config/passport.js";
 import jwt from "jsonwebtoken";
+import { sendOTP, verifyOTP } from "../controllers/otpController.js";
 
 const authRouter = express.Router();
 
 authRouter.post("/register", register);
 authRouter.post("/login", login);
+
+// OTP Routes
+authRouter.post("/send-otp", sendOTP);
+authRouter.post("/verify-otp", verifyOTP);
 
 // Google Auth Routes
 authRouter.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
