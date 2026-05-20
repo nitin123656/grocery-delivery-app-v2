@@ -3,10 +3,8 @@ declare global {
         interface Request {
             user?: {
                 id: string;
-                isAdmin?: boolean;
                 email?: string;
-                name?: string;
-                role?: string;
+                isAdmin?: boolean;
             };
             partner?: {
                 id: string;

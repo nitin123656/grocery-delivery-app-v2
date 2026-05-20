@@ -22,11 +22,11 @@ authRouter.get(
     (req, res) => {
         const user = req.user as any;
         const token = jwt.sign(
-            { id: user.id, email: user.email, role: user.role },
+            { id: user.id, email: user.email },
             process.env.JWT_SECRET as string,
             { expiresIn: "7d" }
         );
-        res.redirect(`https://grocery-delivery-app-v2.vercel.app/auth/google?token=${token}&user=${encodeURIComponent(JSON.stringify({ id: user.id, name: user.name, email: user.email, role: user.role }))}`);
+        res.redirect(`https://grocery-delivery-app-v2.vercel.app/auth/google?token=${token}&user=${encodeURIComponent(JSON.stringify({ id: user.id, name: user.name, email: user.email }))}`);
     }
 );
 
